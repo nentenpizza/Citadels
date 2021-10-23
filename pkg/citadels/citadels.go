@@ -13,25 +13,37 @@ const (
 	MinPlayers = 4
 )
 
+// Phase represents separate logic cycles in game
+// for example, in PickPhase players should pick a hero and move on to the next phase
+type Phase string
+
 // Phases
 var (
 	// PickPhase is phase when players selects their heroes
-	PickPhase = "citadels.phase.pick"
+	PickPhase Phase = "citadels.phase.pick"
 	// ActionPhase is phase when players perform actions
-	ActionPhase = "citadels.phase.action"
+	ActionPhase Phase = "citadels.phase.action"
 )
 
 // Table represents a game table (also known as Room)
 type Table struct {
 	sync.Mutex
 
-	// King is player which starts PickPhase
-	King *Player
+	// king is player which starts PickPhase
+	king *Player
 
-	// Turn is player who is currently taking a turn
-	Turn *Player
+	// turn is player who is currently taking a turn
+	turn *Player
 
 	started bool
+
+	currentPhase Phase
+
+	// heroesToSelect is map of remaining heroes
+	// when a Player selected a hero, the hero should disappear from the map
+	// and the pick should go to the next player with the current map state
+	// used only in PickPhase
+	heroesToSelect map[string]Card
 
 	players map[PlayerID]*Player
 }
@@ -59,7 +71,7 @@ func (t *Table) Start() error {
 
 	// makes random player a king
 	for _, p := range t.players {
-		t.King = p
+		t.king = p
 		break
 	}
 
@@ -67,7 +79,23 @@ func (t *Table) Start() error {
 }
 
 func (t *Table) Started() bool {
+	t.Lock()
+	defer t.Unlock()
 	return t.started
+}
+
+// King returns player which starts PickPhase this round
+func (t *Table) King() *Player  {
+	t.Lock()
+	defer t.Unlock()
+	return t.king
+}
+
+// Turn returns player who is currently taking a turn
+func (t *Table) Turn() *Player  {
+	t.Lock()
+	defer t.Unlock()
+	return t.turn
 }
 
 // AddPlayer adds player to table, returns nil if success

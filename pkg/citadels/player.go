@@ -4,19 +4,19 @@ type PlayerID string
 
 type Player struct {
 	// Quarters that player have and can build
-	HandQuarters []Card
+	HandQuarters []Card `json:"-"`
 
 	// Quarters that player already built
-	CompletedQuarters []Card
+	CompletedQuarters []Card `json:"completed_quarters"`
 
 	// Hero that the player chooses each round
 	// Has unique spells which can change outcome of the game
-	Hero Card
+	Hero Card `json:"-"`
 
 	// In-game currency for building quarters
-	Coins int
+	Coins int `json:"coins"`
 
-	ID PlayerID
+	ID PlayerID `json:"id"`
 
 	updates chan *Event
 }
