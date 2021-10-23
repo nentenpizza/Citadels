@@ -1,4 +1,4 @@
-// package citadels contains internal logic of game
+// Package citadels contains internal logic of game
 // exports API to interact with game world and display it
 package citadels
 
@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	// max number of players in 1 room
+	// MaxPlayers is max number of players in 1 room
 	MaxPlayers = 4
-	// min number of players in 1 room
+	// MinPlayers is min number of players in 1 room
 	MinPlayers = 4
 )
 
 // Phases
 var (
-	// Phase when players selects their heroes
+	// PickPhase is phase when players selects their heroes
 	PickPhase = "citadels.phase.pick"
-	// Phase when players perform actions
+	// ActionPhase is phase when players perform actions
 	ActionPhase = "citadels.phase.action"
 )
 
@@ -83,3 +83,4 @@ func (t *Table) AddPlayer(p *Player) error {
 	t.players[p.ID] = p
 	return nil
 }
+
