@@ -2,25 +2,80 @@ package citadels
 
 // Event Types
 var (
-	EventTypePickPhaseStarted = "phase.pick.started"
+	EventTypeGameStarted = "GameStarted"
+	EventTypePickPhaseStarted = "PhasePickStarted"
+	EventTypeActionPhaseStarted = "ActionPhaseStarted"
+
+	EventTypeNextSelecting = "NextSelecting"
 
 	// Targeted events
 
-	EventTypeSelectHero = "select.hero"
+	EventTypeSelectHero = "SelectHero"
+
+	EventTypeCastSkill = "CastSkill"
+
+	EventTypeStealCoin = "StealCoin"
+	EventTypeStealCard = "StealCard"
+	EventTypeStealCoinPrivate = "StealCoinPrivate"
+	EventTypeStealCardPrivate = "StealCardPrivate"
+
+	EventTypeHeroSelected = "hero.selected"
+
+	EventTypeChooseHero = "ChooseHero"
 )
 
 type Event struct {
-	Type string
-	Data interface{}
+	Type string `json:"type"`
+	Data interface{} `json:"data"`
+	Error string `json:"error"`
 }
 
 // Events Data
 type(
 	EventTargeted struct {
-		TargetID string
+		TargetID string `json:"target_id"`
 	}
 
-	e struct {
+	EventEmperorSkill struct {
+		TargetID PlayerID `json:"target_id"`
 
+		// If Coin is false it means that player wants card instead of coin
+		Coin bool `json:"coin"`
+	}
+
+	EventSteal struct {
+		// FromID is who gives coin/card away
+		FromID PlayerID `json:"from_id"`
+
+		// To is receiver
+		To PlayerID `json:"to"`
+		Count int `json:"count"`
+	}
+
+	EventStealCards struct {
+		// FromID is who gives cards away
+		FromID PlayerID `json:"from_id"`
+
+		// To is receiver
+		To PlayerID `json:"to"`
+
+		// New info about  Player.AvailableQuarters
+		AvailableQuarters []Card `json:"available_quarters"`
+	}
+
+	EventGameStarted struct {
+		King *Player `json:"king"`
+	}
+
+	EventChooseHero struct {
+		Heroes []Hero `json:"heroes"`
+	}
+
+	EventPlayerID struct {
+		PlayerID PlayerID `json:"player_id"`
+	}
+
+	EventHeroSelected struct {
+		Hero Hero `json:"hero"`
 	}
 )

@@ -1,6 +1,6 @@
 package citadels
 
-type CastFunc func(t *Table, caster *Player) error
+type CastFunc func(t *Table, caster *Player, ev Event) error
 
 type Action struct {
 	Event *Event
