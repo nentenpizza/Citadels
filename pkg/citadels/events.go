@@ -8,8 +8,6 @@ var (
 
 	EventTypeNextSelecting = "NextSelecting"
 
-	// Targeted events
-
 	EventTypeSelectHero = "SelectHero"
 
 	EventTypeCastSkill = "CastSkill"
@@ -20,7 +18,6 @@ var (
 	EventTypeStealCardPrivate = "StealCardPrivate"
 
 	EventTypeHeroSelected = "hero.selected"
-
 	EventTypeChooseHero = "ChooseHero"
 )
 
@@ -65,6 +62,11 @@ type(
 
 	EventGameStarted struct {
 		King *Player `json:"king"`
+	}
+
+	EventPickPhaseStarted struct {
+		OpenLockedHeroes []Hero `json:"open_locked_heroes"`
+		ClosedLockedHeroes int `json:"closed_locked_heroes"`
 	}
 
 	EventChooseHero struct {

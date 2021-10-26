@@ -3,10 +3,14 @@
 package citadels
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 )
 
+func init(){
+	rand.Seed(time.Now().UnixNano())
+}
 const (
 	// MaxPlayers is max number of players in 1 room
 	MaxPlayers = 4
@@ -105,14 +109,35 @@ func (t *Table) Start() error {
 
 func (t *Table) startPickPhase()  {
 	t.currentPhase = PickPhase
-	t.selecting = t.king
 
-	copy(t.heroesToSelect, heroSets[t.heroSet])
+	heroSet := make([]Hero, 0)
+	copy(heroSet, heroSets[t.heroSet])
+	rand.Shuffle(len(heroSet), func(i, j int) { heroSet[i], heroSet[j] = heroSet[j], heroSet[i] })
+
+	t.openLockedHeroes = make([]Hero, 0)
+	t.closedLockedHeroes = make([]Hero, 0)
+	var finalIndex int
+
+	for i, hero := range heroSet{
+		t.openLockedHeroes = append(t.openLockedHeroes, hero)
+		if len(t.players) == 4 && i+1 == 3 {
+			t.closedLockedHeroes = append(t.closedLockedHeroes, heroSet[0])
+			finalIndex = i
+			break
+		}
+	}
+
+	t.heroesToSelect = heroSet[finalIndex:]
 
 	t.doBroadcastEvent(Event{
 		Type:  EventTypePickPhaseStarted,
+		Data: EventPickPhaseStarted{
+			OpenLockedHeroes:   t.openLockedHeroes,
+			ClosedLockedHeroes: len(t.closedLockedHeroes),
+		},
 	})
 
+	t.selecting = t.king
 	t.king.Notify(Event{
 		Type:  EventTypeChooseHero,
 		Data:  EventChooseHero{ Heroes: t.heroesToSelect },
@@ -239,6 +264,7 @@ func (t *Table) AddPlayer(p *Player) error {
 		return ErrTableIsFull
 	}
 	t.players[p.ID] = p
+	p.Table = t
 	return nil
 }
 
