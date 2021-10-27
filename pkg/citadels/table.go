@@ -319,7 +319,7 @@ func (t *Table) SelectHero(p *Player, heroName string){
 	})
 }
 
-// AddPlayer adds player to table, returns nil if success
+// AddPlayer adds player to the table
 func (t *Table) AddPlayer(p *Player) error {
 	t.Lock()
 	defer t.Unlock()
@@ -333,4 +333,18 @@ func (t *Table) AddPlayer(p *Player) error {
 	p.Table = t
 	return nil
 }
+
+// RemovePlayer removes player from the table
+func (t *Table) RemovePlayer(pID PlayerID) error {
+	t.Lock()
+	defer t.Unlock()
+	if t.started {
+		return ErrTableAlreadyStarted
+	}
+	p := t.players[pID]
+	delete(t.players, pID)
+	p.Table = t
+	return nil
+}
+
 
