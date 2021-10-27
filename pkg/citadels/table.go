@@ -51,6 +51,8 @@ type Table struct {
 
 	currentPhase Phase
 
+	currentIndex int
+
 	heroSet string
 
 	// heroesToSelect is map of remaining heroes
@@ -84,7 +86,6 @@ func (t *Table) Start() error {
 	if len(t.players) > MaxPlayers {
 		return ErrTableIsFull
 	}
-	t.started = true
 
 	// TODO: rethink in future
 	t.heroSet = "default"
@@ -95,6 +96,16 @@ func (t *Table) Start() error {
 		break
 	}
 
+	t.doBroadcastEvent(Event{
+		Type:  EventTypeRevealHeroSet,
+		Data:  EventHeroSet{
+			HeroSet: heroSets[t.heroSet],
+		},
+	})
+
+	time.Sleep(DelayAfterHeroSetReveal)
+
+	t.started = true
 	t.doBroadcastEvent(Event{
 		Type:  EventTypeGameStarted,
 		Data:  EventGameStarted{
@@ -143,14 +154,7 @@ func (t *Table) startPickPhase()  {
 		Data:  EventChooseHero{ Heroes: t.heroesToSelect },
 	})
 
-	selectingID := t.selecting.ID
-	time.AfterFunc(time.Minute, func(){
-		t.Lock()
-		defer t.Unlock()
-		if t.selecting.ID == selectingID{
-			t.forceSelecting()
-		}
-	})
+	t.startSelectingTimer()
 }
 
 func (t *Table) nextSelecting(){
@@ -165,8 +169,9 @@ func (t *Table) nextSelecting(){
 	for _, p := range t.players{
 		if p.Order == nextPlayerOrder{
 
+			// if turn returns to the king this is means that all players at the table selected their heroes
 			if t.king.ID == p.ID{
-				t.endPickPhase()
+				t.startActionPhase()
 				return
 			}
 			t.selecting = p
@@ -184,27 +189,88 @@ func (t *Table) nextSelecting(){
 		}
 	}
 
-	selectingID := t.selecting.ID
-	time.AfterFunc(time.Minute, func(){
-		t.Lock()
-		defer t.Unlock()
-		if t.selecting.ID == selectingID{
-			t.forceSelecting()
-		}
-	})
-
+	t.startSelectingTimer()
 }
 
-func (t *Table) endPickPhase() {
+func (t *Table) startActionPhase() {
 	t.currentPhase = ActionPhase
 
 	t.doBroadcastEvent(Event{
 		Type:  EventTypeActionPhaseStarted,
 	})
 
+	t.nextTurn()
+
+	t.startTurnTimer()
 }
 
-// Started returns current state of table
+
+func (t *Table) nextTurn() {
+	t.currentIndex += 1
+	if t.currentIndex > 9 {
+		t.currentIndex = 1
+		t.startPickPhase()
+		return
+	}
+
+	for _, p := range t.players{
+		if p.Hero.Turn == t.currentIndex{
+			t.turn = p
+			t.doBroadcastEvent(Event{
+				Type:  EventTypeNextTurn,
+				Data:  EventNextTurn{
+					PlayerID: p.ID,
+					Hero:     p.Hero,
+					Turn:     p.Hero.Turn,
+				},
+			})
+
+			t.startTurnTimer()
+			return
+		}
+	}
+
+	t.doBroadcastEvent(Event{
+		Type:  EventTypeHeroIsAbsent,
+		Data:  EventHeroIsAbsent{
+			Turn: t.currentIndex,
+		},
+	})
+
+	time.Sleep(DelayAfterHeroAbsent)
+
+	t.nextTurn()
+}
+
+func (t *Table) startTurnTimer() {
+	playerID := t.turn.ID
+	time.AfterFunc(time.Minute, func() {
+		t.Lock()
+		defer t.Unlock()
+		if t.currentPhase != ActionPhase {
+			return
+		}
+		if t.turn.ID == playerID {
+			t.nextTurn()
+		}
+	})
+}
+
+func (t *Table) startSelectingTimer() {
+	playerID := t.selecting.ID
+	time.AfterFunc(time.Minute, func() {
+		t.Lock()
+		defer t.Unlock()
+		if t.currentPhase != ActionPhase {
+			return
+		}
+		if t.selecting.ID == playerID {
+			t.forceSelecting()
+		}
+	})
+}
+
+// Started returns current state of the table
 func (t *Table) Started() bool {
 	t.Lock()
 	defer t.Unlock()
@@ -218,7 +284,7 @@ func (t *Table) King() *Player  {
 	return t.king
 }
 
-// Turn returns player who is currently taking a turn
+// Turn returns player which is currently taking a turn
 func (t *Table) Turn() *Player  {
 	t.Lock()
 	defer t.Unlock()

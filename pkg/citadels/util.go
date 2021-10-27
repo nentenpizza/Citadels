@@ -23,7 +23,6 @@ func (t *Table) PlayerByID(id string) (*Player, bool) {
 	return p, ok
 }
 
-// PlayerByID returns player with id, if not exists returns nil, false
 func (t *Table) forceSelecting() {
 	randomIndex := rand.Intn(len(t.heroesToSelect) - 1)
 	hero := t.heroesToSelect[randomIndex]

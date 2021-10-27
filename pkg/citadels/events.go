@@ -19,6 +19,11 @@ var (
 
 	EventTypeHeroSelected = "hero.selected"
 	EventTypeChooseHero = "ChooseHero"
+
+	EventTypeNextTurn = "NextTurn"
+	EventTypeHeroIsAbsent = "HeroAbsent"
+
+	EventTypeRevealHeroSet = "RevealHeroSet"
 )
 
 type Event struct {
@@ -79,5 +84,20 @@ type(
 
 	EventHeroSelected struct {
 		Hero Hero `json:"hero"`
+	}
+
+	EventNextTurn struct {
+		PlayerID PlayerID `json:"player_id"`
+		Hero Hero `json:"hero"`
+		Turn int `json:"turn"`
+	}
+
+	EventHeroIsAbsent struct {
+		Turn int `json:"turn"`
+		HeroName string `json:"hero_name"`
+	}
+
+	EventHeroSet struct {
+		HeroSet []Hero `json:"hero_set"`
 	}
 )
