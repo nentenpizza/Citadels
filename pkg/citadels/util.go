@@ -35,7 +35,7 @@ func (t *Table) forceSelecting() {
 	t.nextSelecting()
 }
 
-func removeCard(slice []Card, s int) []Card {
+func removeQuarter(slice []Quarter, s int) []Quarter {
 	return append(slice[:s], slice[s+1:]...)
 }
 

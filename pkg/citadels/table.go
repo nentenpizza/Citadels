@@ -4,6 +4,7 @@ package citadels
 
 import (
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -64,7 +65,7 @@ type Table struct {
 	openLockedHeroes []Hero
 	closedLockedHeroes []Hero
 
-	deck []Card
+	deck []Quarter
 
 	bewitchedPlayer *Player
 
@@ -109,6 +110,8 @@ func (t *Table) Start() error {
 
 	time.Sleep(DelayAfterHeroSetReveal)
 
+	t.drawCards()
+
 	t.started = true
 	t.doBroadcastEvent(Event{
 		Type:  EventTypeGameStarted,
@@ -120,6 +123,30 @@ func (t *Table) Start() error {
 	t.startPickPhase()
 
 	return nil
+}
+
+func (t *Table) drawCards()  {
+	// TODO: fill the deck normally
+	deck := make([]Quarter, 100)
+	types := []string{
+		QuarterTypeMilitary, QuarterTypeSpecial, QuarterTypeNoble, QuarterTypeSpiritual, QuarterTypeTrade,
+	}
+	for i:=0;i<100;i++{
+		deck[i] = Quarter{
+			Name: strconv.Itoa(rand.Intn(10000000)),
+			Type: types[rand.Intn(5)],
+			Cost: rand.Intn(5)+1,
+		}
+	}
+	t.deck = deck
+	for _, p := range t.players{
+		p.AvailableQuarters = t.deck[:4]
+		t.deck = t.deck[4:]
+		p.Notify(Event{
+			Type:  EventTypeDrawCards,
+			Data:  EventCards{Cards: p.AvailableQuarters},
+		})
+	}
 }
 
 func (t *Table) startPickPhase()  {
@@ -410,7 +437,7 @@ func (t *Table) SelectCard(cardName string, pID string){
 	}
 
 	for i, card := range target.currentCardsChoice {
-		if card.Name() == cardName {
+		if card.Name == cardName {
 			target.AddQuarter(card)
 			target.currentCardsChoice = nil
 

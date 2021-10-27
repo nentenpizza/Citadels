@@ -2,10 +2,19 @@ package citadels
 
 import "encoding/json"
 
-type Card interface {
-	Name() string
-	Type() string
-	MakeAction() *Action
+// Quarter Types
+const (
+	QuarterTypeNoble = "Noble"
+	QuarterTypeMilitary = "Military"
+	QuarterTypeTrade = "Trade"
+	QuarterTypeSpiritual = "Spiritual"
+	QuarterTypeSpecial = "Special"
+)
+
+type Quarter struct {
+	Name string
+	Type string
+	Cost int
 }
 
 // Turns for heroes

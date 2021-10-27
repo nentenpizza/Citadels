@@ -31,6 +31,7 @@ var (
 	EventTypeChooseCards = "ChooseCards"
 
 	EventTypePlayerSelectedCard = "PlayerSelectedCard"
+	EventTypeDrawCards = "DrawCards"
 )
 
 type Event struct {
@@ -69,7 +70,7 @@ type(
 		To PlayerID `json:"to"`
 
 		// New info about  Player.AvailableQuarters
-		AvailableQuarters []Card `json:"available_quarters"`
+		AvailableQuarters []Quarter `json:"available_quarters"`
 	}
 
 	EventGameStarted struct {
@@ -120,11 +121,15 @@ type(
 	}
 
 	EventChooseCards struct {
-		Cards []Card `json:"cards"`
+		Cards []Quarter `json:"cards"`
 	}
 
 	EventPlayerSelectedCard struct {
 		PlayerID PlayerID `json:"player_id"`
 		Index int `json:"index"`
+	}
+
+	EventCards struct {
+		Cards []Quarter `json:"cards"`
 	}
 )

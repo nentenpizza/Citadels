@@ -7,10 +7,10 @@ type PlayerID string
 type Player struct {
 	sync.Mutex
 	// Quarters that player have and can build
-	AvailableQuarters []Card `json:"-"`
+	AvailableQuarters []Quarter `json:"-"`
 
 	// Quarters that player already built
-	CompletedQuarters []Card `json:"completed_quarters"`
+	CompletedQuarters []Quarter `json:"completed_quarters"`
 
 	// Hero that the player chooses each round
 	// Has unique spells which can change outcome of the game
@@ -28,7 +28,7 @@ type Player struct {
 
 	madeAction bool
 
-	currentCardsChoice []Card
+	currentCardsChoice []Quarter
 
 	updates chan Event
 }
@@ -56,13 +56,13 @@ func (p *Player) AddCoins(coins int){
 	p.Coins += coins
 }
 
-func (p *Player) AddQuarter(quarter Card){
+func (p *Player) AddQuarter(quarter Quarter){
 	p.Lock()
 	defer p.Unlock()
 	p.AvailableQuarters = append(p.AvailableQuarters, quarter)
 }
 
-func (p *Player) setCurrentCardsChoice(cards []Card) {
+func (p *Player) setCurrentCardsChoice(cards []Quarter) {
 	p.Lock()
 	defer p.Unlock()
 	p.currentCardsChoice = cards
@@ -109,7 +109,7 @@ func (p *Player) giveRandomCards(other *Player, cards int) {
 		if len(p.AvailableQuarters) >= i+1 {
 			other.Lock()
 			other.AvailableQuarters = append(other.AvailableQuarters, p.AvailableQuarters[i])
-			p.AvailableQuarters = removeCard(p.AvailableQuarters, i)
+			p.AvailableQuarters = removeQuarter(p.AvailableQuarters, i)
 			other.Unlock()
 		}
 	}
