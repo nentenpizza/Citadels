@@ -66,6 +66,8 @@ type Table struct {
 
 	deck []Card
 
+	bewitchedPlayer *Player
+
 	players map[PlayerID]*Player
 }
 
@@ -202,8 +204,6 @@ func (t *Table) startActionPhase() {
 	})
 
 	t.nextTurn()
-
-	t.startTurnTimer()
 }
 
 
@@ -302,6 +302,10 @@ func (t *Table) SelectHero(p *Player, heroName string){
 	t.Lock()
 	defer t.Unlock()
 
+	if t.currentPhase != PickPhase{
+		return
+	}
+
 	if t.selecting.ID != p.ID{
 		p.Notify(Event{Error: ErrorTypeAnotherPlayerSelecting})
 		return
@@ -325,8 +329,23 @@ func (t *Table) SelectHero(p *Player, heroName string){
 	})
 }
 
+func (t *Table) CastSkill(casterID string, ev Event) error{
+	caster, ok := t.PlayerByID(casterID)
+	if !ok {
+		return ErrPlayerNotExists
+	}
+
+	err := caster.Hero.Skill.Do(t, caster, ev)
+	if err != nil {
+		return err
+	}
+
+	t.nextTurn()
+	return nil
+}
+
 const (
-	ActionTypeCoin = "coin"
+	ActionTypeCoin = "coins"
 	ActionTypeCards = "cards"
 )
 
