@@ -24,6 +24,13 @@ var (
 	EventTypeHeroIsAbsent = "HeroAbsent"
 
 	EventTypeRevealHeroSet = "RevealHeroSet"
+
+	EventTypeCoinsGive = "CoinsGive"
+
+	EventTypePlayerChoosingCards = "PlayerChoosingCards"
+	EventTypeChooseCards = "ChooseCards"
+
+	EventTypePlayerSelectedCard = "PlayerSelectedCard"
 )
 
 type Event struct {
@@ -99,5 +106,25 @@ type(
 
 	EventHeroSet struct {
 		HeroSet []Hero `json:"hero_set"`
+	}
+
+	EventCoinGive struct {
+		To PlayerID `json:"to"`
+		Amount int `json:"amount"`
+		Sum int `json:"sum"`
+	}
+
+	EventPlayerChoosingCards struct {
+		PlayerID PlayerID `json:"player_id"`
+		CardsAmount int `json:"cards_amount"`
+	}
+
+	EventChooseCards struct {
+		Cards []Card `json:"cards"`
+	}
+
+	EventPlayerSelectedCard struct {
+		PlayerID PlayerID `json:"player_id"`
+		Index int `json:"index"`
 	}
 )

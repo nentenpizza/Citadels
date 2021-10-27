@@ -64,6 +64,8 @@ type Table struct {
 	openLockedHeroes []Hero
 	closedLockedHeroes []Hero
 
+	deck []Card
+
 	players map[PlayerID]*Player
 }
 
@@ -215,6 +217,9 @@ func (t *Table) nextTurn() {
 
 	for _, p := range t.players{
 		if p.Hero.Turn == t.currentIndex{
+			t.turn.madeAction = false
+			t.turn.currentCardsChoice = nil
+
 			t.turn = p
 			t.doBroadcastEvent(Event{
 				Type:  EventTypeNextTurn,
@@ -299,6 +304,7 @@ func (t *Table) SelectHero(p *Player, heroName string){
 
 	if t.selecting.ID != p.ID{
 		p.Notify(Event{Error: ErrorTypeAnotherPlayerSelecting})
+		return
 	}
 
 	for i, hero := range t.heroesToSelect{
@@ -317,6 +323,86 @@ func (t *Table) SelectHero(p *Player, heroName string){
 		Data:  EventChooseHero{Heroes: t.heroesToSelect},
 		Error: ErrorTypeHeroNotInStack,
 	})
+}
+
+const (
+	ActionTypeCoin = "coin"
+	ActionTypeCards = "cards"
+)
+
+// MakeAction gives Player 2 coins or 1 card depending on the type
+func (t *Table) MakeAction(actionType string, pID string) {
+	t.Lock()
+	defer t.Unlock()
+	
+	target, ok := t.PlayerByID(pID)
+	if !ok {
+		return
+	}
+
+	if t.turn.ID != target.ID {
+		return
+	}
+
+	if target.madeAction {
+		return
+	}
+
+	switch actionType {
+	case ActionTypeCoin:
+		target.AddCoins(2)
+		t.doBroadcastEvent(Event{Type: EventTypeCoinsGive, Data: EventCoinGive{
+			To:     target.ID,
+			Amount: 2,
+			Sum:    target.Coins,
+		}})
+
+	case ActionTypeCards:
+		target.setCurrentCardsChoice(t.deck[:2])
+		target.Notify(Event{Type: EventTypeChooseCards, Data: EventChooseCards{
+			Cards: t.deck[:2],
+		}})
+		t.deck = t.deck[2:]
+		t.doBroadcastEvent(Event{Type: EventTypePlayerChoosingCards, Data: EventPlayerChoosingCards{
+			PlayerID:    target.ID,
+			CardsAmount: 2,
+		}})
+	default:
+		target.Notify(Event{
+			Error: ErrorTypeWrongAction,
+		})
+		return
+	}
+
+	target.madeAction = true
+}
+
+// SelectCard adds card to Player.AvailableQuarters
+func (t *Table) SelectCard(cardName string, pID string){
+	t.Lock()
+	defer t.Unlock()
+	target, ok := t.PlayerByID(pID)
+	if !ok {
+		return
+	}
+
+	if target.currentCardsChoice == nil || len(target.currentCardsChoice) < 2{
+		return
+	}
+
+	for i, card := range target.currentCardsChoice {
+		if card.Name() == cardName {
+			target.AddQuarter(card)
+			target.currentCardsChoice = nil
+
+			t.doBroadcastEvent(Event{Type: EventTypePlayerSelectedCard, Data: EventPlayerSelectedCard{
+				PlayerID: target.ID,
+				Index:    i,
+			}})
+			break
+		}
+	}
+
 }
 
 // AddPlayer adds player to the table

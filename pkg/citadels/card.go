@@ -3,6 +3,7 @@ package citadels
 import "encoding/json"
 
 type Card interface {
+	Name() string
 	Type() string
 	MakeAction() *Action
 }
@@ -13,6 +14,16 @@ const (
 	EnchantressTurn = 3
 )
 
+// Skill types
+const (
+	SkillTypeAnytime = "skill.type.anytime"
+	SkillTypeAtStart = "skill.type.at.start"
+)
+
+type Skill struct {
+	Type string
+	Do CastFunc
+}
 
 type Hero struct {
 	// Name of hero
@@ -22,53 +33,55 @@ type Hero struct {
 	// heroes makes moves in specific order from 1 to 9
 	Turn int `json:"turn"`
 
-	Skill CastFunc `json:"-"`
+	Skill Skill
 }
 
 func Emperor() Hero {
 	return Hero{
 		Name:  "Emperor",
 		Turn:  4,
-		Skill: func(t *Table, caster *Player, ev Event) error {
-			b, err := json.Marshal(ev.Data)
-			if err != nil {
-				return err
-			}
-			var e EventEmperorSkill
-			err = json.Unmarshal(b, &e)
-			if err != nil {
-				return ErrWrongEventData
-			}
-
-			target, ok := t.PlayerByID(string(e.TargetID))
-			if !ok {
-				return ErrPlayerNotExists
-			}
-
-			if target.ID == caster.ID{
-				return ErrCannotCastOnMyself
-			}
-
-			if e.Coin {
-				if target.Coins > 0 {
-					target.giveCoins(caster, 1)
-					return nil
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				b, err := json.Marshal(ev.Data)
+				if err != nil {
+					return err
 				}
-				ev.Error = ErrorTypeTargetHasNoCoins
-				caster.Notify(ev)
-			}
-			if !e.Coin{
-				if len(target.AvailableQuarters) > 0 {
-					target.giveRandomCards(caster, 1)
-
-					return nil
+				var e EventEmperorSkill
+				err = json.Unmarshal(b, &e)
+				if err != nil {
+					return ErrWrongEventData
 				}
-				ev.Error = ErrorTypeTargetHasNoCards
-				caster.Notify(ev)
-			}
 
-			return nil
+				target, ok := t.PlayerByID(string(e.TargetID))
+				if !ok {
+					return ErrPlayerNotExists
+				}
+
+				if target.ID == caster.ID {
+					return ErrCannotCastOnMyself
+				}
+
+				if e.Coin {
+					if target.Coins > 0 {
+						target.giveCoins(caster, 1)
+						return nil
+					}
+					ev.Error = ErrorTypeTargetHasNoCoins
+					caster.Notify(ev)
+				}
+				if !e.Coin {
+					if len(target.AvailableQuarters) > 0 {
+						target.giveRandomCards(caster, 1)
+
+						return nil
+					}
+					ev.Error = ErrorTypeTargetHasNoCards
+					caster.Notify(ev)
+				}
+
+				return nil
+			},
 		},
-
 	}
 }

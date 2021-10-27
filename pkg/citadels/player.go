@@ -26,6 +26,10 @@ type Player struct {
 
 	Table *Table `json:"-"`
 
+	madeAction bool
+
+	currentCardsChoice []Card
+
 	updates chan Event
 }
 
@@ -44,6 +48,24 @@ func (p *Player) Notify(e Event){
 	p.Lock()
 	defer p.Unlock()
 	p.updates <- e
+}
+
+func (p *Player) AddCoins(coins int){
+	p.Lock()
+	defer p.Unlock()
+	p.Coins += coins
+}
+
+func (p *Player) AddQuarter(quarter Card){
+	p.Lock()
+	defer p.Unlock()
+	p.AvailableQuarters = append(p.AvailableQuarters, quarter)
+}
+
+func (p *Player) setCurrentCardsChoice(cards []Card) {
+	p.Lock()
+	defer p.Unlock()
+	p.currentCardsChoice = cards
 }
 
 func (p *Player) giveCoins(other *Player,coins int) {

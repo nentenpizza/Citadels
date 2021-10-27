@@ -18,4 +18,6 @@ var (
 	ErrorTypeTargetHasNoCards = "errors.target.no.cards"
 	ErrorTypeAnotherPlayerSelecting = "errors.selecting.another"
 	ErrorTypeHeroNotInStack = "errors.hero.not.stack"
+
+	ErrorTypeWrongAction = "errors.wrong.action"
 )
