@@ -274,6 +274,14 @@ func (t *Table) nextTurn() {
 	t.nextTurn()
 }
 
+func (t *Table) endRound(){
+	for _, p := range t.players{
+		if len(p.CompletedQuarters) == 7{
+
+		}
+	}
+}
+
 func (t *Table) startTurnTimer() {
 	playerID := t.turn.ID
 	time.AfterFunc(time.Minute, func() {
@@ -357,6 +365,9 @@ func (t *Table) SelectHero(p *Player, heroName string){
 }
 
 func (t *Table) CastSkill(casterID string, ev Event) error{
+	t.Lock()
+	defer t.Unlock()
+
 	caster, ok := t.PlayerByID(casterID)
 	if !ok {
 		return ErrPlayerNotExists
@@ -454,8 +465,13 @@ func (t *Table) SelectCard(cardName string, pID string){
 func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 	t.Lock()
 	defer t.Unlock()
+
 	target, ok := t.PlayerByID(pID)
 	if !ok {
+		return
+	}
+
+	if target.BuildChancesLeft < 1 {
 		return
 	}
 
@@ -485,6 +501,7 @@ func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 	t.doBroadcastEvent(Event{Type: EventTypePlayerBuiltQuarter,
 		Data: EventQuarter{Quarter: quarter},
 	})
+	target.SubtractBuildChancesLeft(1)
 }
 
 // AddPlayer adds player to the table

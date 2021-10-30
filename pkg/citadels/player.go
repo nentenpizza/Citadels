@@ -12,6 +12,9 @@ type Player struct {
 	// Quarters that player already built
 	CompletedQuarters []Quarter `json:"completed_quarters"`
 
+	// BuildChancesLeft shows how many Quarter`s player can build this round
+	BuildChancesLeft int
+
 	// Hero that the player chooses each round
 	// Has unique spells which can change outcome of the game
 	Hero Hero `json:"-"`
@@ -55,6 +58,13 @@ func (p *Player) buildQuarter(quarter Quarter) {
 	p.Lock()
 	defer p.Unlock()
 	p.CompletedQuarters = append(p.CompletedQuarters, quarter)
+	p.BuildChancesLeft--
+}
+
+func (p *Player) SubtractBuildChancesLeft(i int) {
+	p.Lock()
+	defer p.Unlock()
+	p.BuildChancesLeft =- i
 }
 
 func (p *Player) Updates() <-chan Event {
