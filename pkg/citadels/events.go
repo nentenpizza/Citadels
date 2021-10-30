@@ -32,6 +32,8 @@ var (
 
 	EventTypePlayerSelectedCard = "PlayerSelectedCard"
 	EventTypeDrawCards = "DrawCards"
+
+	EventTypePlayerBuiltQuarter = "PlayerBuiltQuarter"
 )
 
 type Event struct {
@@ -131,5 +133,9 @@ type(
 
 	EventCards struct {
 		Cards []Quarter `json:"cards"`
+	}
+
+	EventQuarter struct {
+		Quarter Quarter `json:"quarter"`
 	}
 )

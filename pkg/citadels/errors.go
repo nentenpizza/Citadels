@@ -20,4 +20,6 @@ var (
 	ErrorTypeHeroNotInStack = "errors.hero.not.stack"
 
 	ErrorTypeWrongAction = "errors.wrong.action"
+	ErrorTypeNotEnoughCoins = "errors.not.enough.coins"
+	ErrorTypeQuarterAlreadyBuilt = "errors.quarter.built"
 )

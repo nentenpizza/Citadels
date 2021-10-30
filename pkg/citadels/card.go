@@ -12,9 +12,9 @@ const (
 )
 
 type Quarter struct {
-	Name string
-	Type string
-	Cost int
+	Name  string
+	Type  string
+	Price int
 }
 
 // Turns for heroes

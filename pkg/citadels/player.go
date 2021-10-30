@@ -40,6 +40,23 @@ func NewPlayer(id PlayerID) *Player {
 	}
 }
 
+func (p *Player) hasQuarter(quarterName string) bool {
+	p.Lock()
+	defer p.Unlock()
+	for _, quarter := range p.CompletedQuarters{
+		if quarter.Name == quarterName{
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Player) buildQuarter(quarter Quarter) {
+	p.Lock()
+	defer p.Unlock()
+	p.CompletedQuarters = append(p.CompletedQuarters, quarter)
+}
+
 func (p *Player) Updates() <-chan Event {
 	return p.updates
 }

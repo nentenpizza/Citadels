@@ -133,9 +133,9 @@ func (t *Table) drawCards()  {
 	}
 	for i:=0;i<100;i++{
 		deck[i] = Quarter{
-			Name: strconv.Itoa(rand.Intn(10000000)),
-			Type: types[rand.Intn(5)],
-			Cost: rand.Intn(5)+1,
+			Name:  strconv.Itoa(rand.Intn(10000000)),
+			Type:  types[rand.Intn(5)],
+			Price: rand.Intn(5)+1,
 		}
 	}
 	t.deck = deck
@@ -449,6 +449,42 @@ func (t *Table) SelectCard(cardName string, pID string){
 		}
 	}
 
+}
+
+func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
+	t.Lock()
+	defer t.Unlock()
+	target, ok := t.PlayerByID(pID)
+	if !ok {
+		return
+	}
+
+	if t.currentPhase != ActionPhase {
+		return
+	}
+
+	if t.turn.ID != target.ID{
+		return
+	}
+
+	if quarter.Price > target.Coins{
+		target.Notify(Event{
+			Error: ErrorTypeNotEnoughCoins,
+		})
+		return
+	}
+
+	if target.hasQuarter(quarter.Name) {
+		target.Notify(Event{
+			Error: ErrorTypeQuarterAlreadyBuilt,
+		})
+		return
+	}
+
+	target.buildQuarter(quarter)
+	t.doBroadcastEvent(Event{Type: EventTypePlayerBuiltQuarter,
+		Data: EventQuarter{Quarter: quarter},
+	})
 }
 
 // AddPlayer adds player to the table
