@@ -29,6 +29,8 @@ const (
 	PickPhase Phase = "citadels.phase.pick"
 	// ActionPhase is phase when players perform actions
 	ActionPhase Phase = "citadels.phase.action"
+	// EndGamePhase is phase when game is ended
+	EndGamePhase Phase = "citadels.phase.end"
 )
 
 var heroSets = map[string][]Hero{
@@ -55,6 +57,8 @@ type Table struct {
 	currentIndex int
 
 	heroSet string
+
+	completedQuartersFirst *Player
 
 	// heroesToSelect is map of remaining heroes
 	// when a Player selected a hero, the hero should disappear from the slice
@@ -238,7 +242,10 @@ func (t *Table) nextTurn() {
 	t.currentIndex += 1
 	if t.currentIndex > 9 {
 		t.currentIndex = 1
-		t.startPickPhase()
+		t.endRound()
+		if t.currentPhase != EndGamePhase {
+			t.startPickPhase()
+		}
 		return
 	}
 
@@ -276,10 +283,35 @@ func (t *Table) nextTurn() {
 
 func (t *Table) endRound(){
 	for _, p := range t.players{
-		if len(p.CompletedQuarters) == 7{
-
+		if len(p.CompletedQuarters) == 7 && t.currentPhase != EndGamePhase{
+			t.currentPhase = EndGamePhase
 		}
 	}
+
+	if t.currentPhase != EndGamePhase {
+		return
+	}
+	var winner *Player
+	for _, p := range t.players{
+		for _, quarter := range p.CompletedQuarters{
+			p.totalScore += quarter.Price
+		}
+		if len(p.CompletedQuarters) == 7 && p.ID != t.completedQuartersFirst.ID{
+			p.totalScore += 2
+		}
+		if winner == nil{
+			winner = p
+		}
+		if p.totalScore > winner.totalScore {
+			winner = p
+		}
+	}
+	t.completedQuartersFirst.totalScore += 4
+
+
+	t.doBroadcastEvent(Event{Type: "EventTypeGameEnded",
+		Data: EventGameEnded{Winner: winner.ID},
+	})
 }
 
 func (t *Table) startTurnTimer() {
@@ -502,6 +534,10 @@ func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 		Data: EventQuarter{Quarter: quarter},
 	})
 	target.SubtractBuildChancesLeft(1)
+
+	if len(target.CompletedQuarters) == 7 {
+		t.completedQuartersFirst = target
+	}
 }
 
 // AddPlayer adds player to the table

@@ -34,6 +34,8 @@ var (
 	EventTypeDrawCards = "DrawCards"
 
 	EventTypePlayerBuiltQuarter = "PlayerBuiltQuarter"
+
+	EventTypeGameEnded = "GameEnded"
 )
 
 type Event struct {
@@ -137,5 +139,9 @@ type(
 
 	EventQuarter struct {
 		Quarter Quarter `json:"quarter"`
+	}
+
+	EventGameEnded struct {
+		Winner PlayerID `json:"winner"`
 	}
 )

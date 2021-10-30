@@ -33,6 +33,8 @@ type Player struct {
 
 	currentCardsChoice []Quarter
 
+	totalScore int
+
 	updates chan Event
 }
 
@@ -41,6 +43,10 @@ func NewPlayer(id PlayerID) *Player {
 		ID:      id,
 		updates: make(chan Event),
 	}
+}
+
+func (p *Player) TotalScore() int  {
+	return p.totalScore
 }
 
 func (p *Player) hasQuarter(quarterName string) bool {
