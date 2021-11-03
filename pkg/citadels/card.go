@@ -94,3 +94,108 @@ func Emperor() Hero {
 		},
 	}
 }
+
+func Witch() Hero {
+	return Hero{
+		Name:  "Witch",
+		Turn:  1,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Blackmailer() Hero {
+	return Hero{
+		Name:  "Blackmailer",
+		Turn:  2,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Enchantress() Hero {
+	return Hero{
+		Name:  "Enchantress",
+		Turn:  3,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Abat() Hero {
+	return Hero{
+		Name:  "Abat",
+		Turn:  5,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Alchemist() Hero {
+	return Hero{
+		Name:  "Alchemist",
+		Turn:  6,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Architect() Hero {
+	return Hero{
+		Name:  "Architect",
+		Turn:  7,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+func Warlord() Hero {
+	return Hero{
+		Name:  "Warlord",
+		Turn:  8,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}
+
+
+func CustomsOfficer() Hero {
+	return Hero{
+		Name:  "CustomsOfficer",
+		Turn:  9,
+		Skill: Skill{
+			Type: SkillTypeAnytime,
+			Do: func(t *Table, caster *Player, ev Event) error {
+				return nil
+			},
+		},
+	}
+}

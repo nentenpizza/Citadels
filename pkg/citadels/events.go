@@ -8,8 +8,6 @@ var (
 
 	EventTypeNextSelecting = "NextSelecting"
 
-	EventTypeSelectHero = "SelectHero"
-
 	EventTypeCastSkill = "CastSkill"
 
 	EventTypeStealCoin = "StealCoin"

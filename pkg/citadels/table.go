@@ -31,10 +31,11 @@ const (
 	ActionPhase Phase = "citadels.phase.action"
 	// EndGamePhase is phase when game is ended
 	EndGamePhase Phase = "citadels.phase.end"
+	PreGamePhase Phase = "citadels.phase.pregame"
 )
 
 var heroSets = map[string][]Hero{
-	"default": {Emperor(), Emperor(), Emperor(), Emperor(), Emperor(), Emperor()},
+	"default": {Witch(), Blackmailer(), Enchantress(), Emperor(), Abat(), Alchemist(), Architect(), Warlord(), CustomsOfficer()},
 }
 
 // Table represents a game table (also known as Room)
@@ -79,6 +80,7 @@ type Table struct {
 func NewTable() *Table {
 	return &Table{
 		players: make(map[PlayerID]*Player),
+		currentPhase: PreGamePhase,
 	}
 }
 
@@ -94,6 +96,13 @@ func (t *Table) Start() error {
 	}
 	if len(t.players) > MaxPlayers {
 		return ErrTableIsFull
+	}
+
+	var i int = 1
+	for _, player := range t.players{
+		player.Order = i
+		i++
+		go player.Listen()
 	}
 
 	// TODO: rethink in future
@@ -156,8 +165,9 @@ func (t *Table) drawCards()  {
 func (t *Table) startPickPhase()  {
 	t.currentPhase = PickPhase
 
-	heroSet := make([]Hero, 0)
+	heroSet := make([]Hero, len(heroSets[t.heroSet]))
 	copy(heroSet, heroSets[t.heroSet])
+
 	rand.Shuffle(len(heroSet), func(i, j int) { heroSet[i], heroSet[j] = heroSet[j], heroSet[i] })
 
 	t.openLockedHeroes = make([]Hero, 0)
@@ -172,7 +182,6 @@ func (t *Table) startPickPhase()  {
 			break
 		}
 	}
-
 	t.heroesToSelect = heroSet[finalIndex:]
 
 	t.doBroadcastEvent(Event{
@@ -251,10 +260,12 @@ func (t *Table) nextTurn() {
 
 	for _, p := range t.players{
 		if p.Hero.Turn == t.currentIndex{
+			t.turn = p
+
 			t.turn.madeAction = false
 			t.turn.currentCardsChoice = nil
+			t.turn.BuildChancesLeft = 1
 
-			t.turn = p
 			t.doBroadcastEvent(Event{
 				Type:  EventTypeNextTurn,
 				Data:  EventNextTurn{
@@ -279,6 +290,15 @@ func (t *Table) nextTurn() {
 	time.Sleep(DelayAfterHeroAbsent)
 
 	t.nextTurn()
+}
+
+func (t *Table) EndTurn(pID PlayerID)  {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.turn.ID == pID{
+		t.nextTurn()
+	}
 }
 
 func (t *Table) endRound(){
@@ -308,6 +328,10 @@ func (t *Table) endRound(){
 	}
 	t.completedQuartersFirst.totalScore += 4
 
+
+	if winner == nil{
+		return
+	}
 
 	t.doBroadcastEvent(Event{Type: "EventTypeGameEnded",
 		Data: EventGameEnded{Winner: winner.ID},
@@ -424,7 +448,7 @@ func (t *Table) MakeAction(actionType string, pID string) {
 	t.Lock()
 	defer t.Unlock()
 	
-	target, ok := t.PlayerByID(pID)
+	target, ok := t.playerByID(pID)
 	if !ok {
 		return
 	}
@@ -564,8 +588,6 @@ func (t *Table) RemovePlayer(pID PlayerID) error {
 	}
 	p := t.players[pID]
 	delete(t.players, pID)
-	p.Table = t
+	p.Table = nil
 	return nil
 }
-
-

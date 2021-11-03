@@ -1,6 +1,9 @@
 package citadels
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type PlayerID string
 
@@ -36,12 +39,31 @@ type Player struct {
 	totalScore int
 
 	updates chan Event
+
+	OnEvent func(e Event, p *Player)
 }
 
-func NewPlayer(id PlayerID) *Player {
+func NewPlayer(id PlayerID, onEvent func(e Event, p *Player)) *Player {
 	return &Player{
 		ID:      id,
-		updates: make(chan Event),
+		updates: make(chan Event, 10000000),
+		currentCardsChoice: make([]Quarter, 0),
+		AvailableQuarters: make([]Quarter, 0),
+		CompletedQuarters: make([]Quarter, 0),
+		OnEvent: onEvent,
+	}
+}
+
+func (p *Player) Listen() {
+	for {
+		select {
+		case e, ok := <- p.updates:
+			if !ok{
+				log.Println("leave listen ", p.ID)
+				return
+			}
+			p.OnEvent(e, p)
+		}
 	}
 }
 

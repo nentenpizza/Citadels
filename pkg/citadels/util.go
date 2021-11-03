@@ -19,12 +19,17 @@ func (t *Table) doBroadcastEvent(e Event) {
 func (t *Table) PlayerByID(id string) (*Player, bool) {
 	t.Lock()
 	defer t.Unlock()
+	return t.playerByID(id)
+}
+
+// PlayerByID returns player with id, if not exists returns nil, false
+func (t *Table) playerByID(id string) (*Player, bool) {
 	p, ok := t.players[PlayerID(id)]
 	return p, ok
 }
 
 func (t *Table) forceSelecting() {
-	randomIndex := rand.Intn(len(t.heroesToSelect) - 1)
+	randomIndex := rand.Intn(len(t.heroesToSelect))
 	hero := t.heroesToSelect[randomIndex]
 	t.selecting.Hero = hero
 	t.selecting.Notify(Event{
