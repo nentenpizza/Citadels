@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+type OnEventFunc func(Event, *Player)
+
 type PlayerID string
 
 type Player struct {
@@ -40,10 +42,10 @@ type Player struct {
 
 	updates chan Event
 
-	OnEvent func(e Event, p *Player)
+	OnEvent OnEventFunc
 }
 
-func NewPlayer(id PlayerID, onEvent func(e Event, p *Player)) *Player {
+func NewPlayer(id PlayerID, onEvent OnEventFunc) *Player {
 	return &Player{
 		ID:      id,
 		updates: make(chan Event, 10000000),

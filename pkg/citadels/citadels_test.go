@@ -10,7 +10,7 @@ import (
 func TestTable(t *testing.T) {
 	table := NewTable()
 
-	onEv := func(logging bool) func(e Event, p *Player){
+	onEv := func(logging bool) OnEventFunc {
 		return func(e Event, p *Player) {
 			if logging{
 				t.Log(e.Type)
