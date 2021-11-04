@@ -1,7 +1,6 @@
 package citadels
 
 import (
-	"log"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -11,51 +10,35 @@ import (
 func TestTable(t *testing.T) {
 	table := NewTable()
 
-	onEvLog := func(e Event, p *Player){
-		log.Println(e.Type)
-		switch e.Type {
-		case EventTypeChooseHero:
-			data, ok := e.Data.(EventChooseHero)
-			if !ok{
-				return
+	onEv := func(logging bool) func(e Event, p *Player){
+		return func(e Event, p *Player) {
+			if logging{
+				t.Log(e.Type)
 			}
-			table.SelectHero(p, data.Heroes[0].Name)
-		case EventTypeNextTurn:
-			data, ok := e.Data.(EventNextTurn)
-			if !ok{
-				return
-			}
-			if data.PlayerID == p.ID{
-				table.MakeAction(ActionTypeCoin, string(p.ID))
-				table.EndTurn(p.ID)
-			}
-		}
-	}
-
-	onEv := func(e Event, p *Player){
-		switch e.Type {
-		case EventTypeChooseHero:
-			data, ok := e.Data.(EventChooseHero)
-			if !ok {
-				return
-			}
-			table.SelectHero(p, data.Heroes[0].Name)
-		case EventTypeNextTurn:
-			data, ok := e.Data.(EventNextTurn)
-			if !ok {
-				return
-			}
-			if data.PlayerID == p.ID {
-				table.MakeAction(ActionTypeCoin, string(p.ID))
-				table.EndTurn(p.ID)
+			switch e.Type {
+			case EventTypeChooseHero:
+				data, ok := e.Data.(EventChooseHero)
+				if !ok {
+					return
+				}
+				table.SelectHero(p, data.Heroes[0].Name)
+			case EventTypeNextTurn:
+				data, ok := e.Data.(EventNextTurn)
+				if !ok {
+					return
+				}
+				if data.PlayerID == p.ID {
+					table.MakeAction(ActionTypeCoin, string(p.ID))
+					table.EndTurn(p.ID)
+				}
 			}
 		}
 	}
 
-	p1 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEvLog)
-	p2 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv)
-	p3 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv)
-	p4 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv)
+	p1 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(true))
+	p2 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
+	p3 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
+	p4 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
 
 	err := table.AddPlayer(p1)
 	if err != nil {
