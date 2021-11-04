@@ -73,10 +73,21 @@ func (p *Player) TotalScore() int  {
 	return p.totalScore
 }
 
-func (p *Player) hasQuarter(quarterName string) bool {
+func (p *Player) builtQuarter(quarterName string) bool {
 	p.Lock()
 	defer p.Unlock()
 	for _, quarter := range p.CompletedQuarters{
+		if quarter.Name == quarterName{
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Player) hasQuarter(quarterName string) bool {
+	p.Lock()
+	defer p.Unlock()
+	for _, quarter := range p.AvailableQuarters{
 		if quarter.Name == quarterName{
 			return true
 		}
@@ -88,6 +99,7 @@ func (p *Player) buildQuarter(quarter Quarter) {
 	p.Lock()
 	defer p.Unlock()
 	p.CompletedQuarters = append(p.CompletedQuarters, quarter)
+	p.AvailableQuarters = removeQuarterByName(p.AvailableQuarters, quarter.Name)
 	p.BuildChancesLeft--
 }
 

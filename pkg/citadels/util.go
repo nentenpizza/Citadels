@@ -44,6 +44,15 @@ func removeQuarter(slice []Quarter, s int) []Quarter {
 	return append(slice[:s], slice[s+1:]...)
 }
 
+func removeQuarterByName(slice []Quarter, name string) []Quarter {
+	for i, q := range slice{
+		if q.Name == name{
+			return removeQuarter(slice, i)
+		}
+	}
+	return slice
+}
+
 func removeHero(slice []Hero, s int) []Hero {
 	return append(slice[:s], slice[s+1:]...)
 }

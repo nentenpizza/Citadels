@@ -75,13 +75,23 @@ type Table struct {
 	bewitchedPlayer *Player
 
 	players map[PlayerID]*Player
+
+	Delays bool
+
+	done chan struct{}
 }
 
-func NewTable() *Table {
+func NewTable(delay bool) *Table {
 	return &Table{
 		players: make(map[PlayerID]*Player),
 		currentPhase: PreGamePhase,
+		Delays: delay,
+		done: make(chan struct{}),
 	}
+}
+
+func (t *Table) End() <-chan struct{} {
+	return t.done
 }
 
 // Start makes the table ready to conduct rounds
@@ -121,7 +131,7 @@ func (t *Table) Start() error {
 		},
 	})
 
-	time.Sleep(DelayAfterHeroSetReveal)
+	t.Sleep(DelayAfterHeroSetReveal)
 
 	t.drawCards()
 
@@ -148,7 +158,8 @@ func (t *Table) drawCards()  {
 		deck[i] = Quarter{
 			Name:  strconv.Itoa(rand.Intn(10000000)),
 			Type:  types[rand.Intn(5)],
-			Price: rand.Intn(5)+1,
+			Price: 1,
+			//Price: rand.Intn(5)+1,
 		}
 	}
 	t.deck = deck
@@ -287,7 +298,7 @@ func (t *Table) nextTurn() {
 		},
 	})
 
-	time.Sleep(DelayAfterHeroAbsent)
+	t.Sleep(DelayAfterHeroAbsent)
 
 	t.nextTurn()
 }
@@ -311,6 +322,7 @@ func (t *Table) endRound(){
 	if t.currentPhase != EndGamePhase {
 		return
 	}
+	t.completedQuartersFirst.totalScore += 4
 	var winner *Player
 	for _, p := range t.players{
 		for _, quarter := range p.CompletedQuarters{
@@ -326,16 +338,19 @@ func (t *Table) endRound(){
 			winner = p
 		}
 	}
-	t.completedQuartersFirst.totalScore += 4
+
 
 
 	if winner == nil{
 		return
 	}
 
-	t.doBroadcastEvent(Event{Type: "EventTypeGameEnded",
+
+	t.doBroadcastEvent(Event{Type: EventTypeGameEnded,
 		Data: EventGameEnded{Winner: winner.ID},
 	})
+
+	t.done <- struct{}{}
 }
 
 func (t *Table) startTurnTimer() {
@@ -494,7 +509,7 @@ func (t *Table) MakeAction(actionType string, pID string) {
 func (t *Table) SelectCard(cardName string, pID string){
 	t.Lock()
 	defer t.Unlock()
-	target, ok := t.PlayerByID(pID)
+	target, ok := t.playerByID(pID)
 	if !ok {
 		return
 	}
@@ -522,7 +537,7 @@ func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 	t.Lock()
 	defer t.Unlock()
 
-	target, ok := t.PlayerByID(pID)
+	target, ok := t.playerByID(pID)
 	if !ok {
 		return
 	}
@@ -546,7 +561,11 @@ func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 		return
 	}
 
-	if target.hasQuarter(quarter.Name) {
+	if !target.hasQuarter(quarter.Name){
+		return
+	}
+
+	if target.builtQuarter(quarter.Name) {
 		target.Notify(Event{
 			Error: ErrorTypeQuarterAlreadyBuilt,
 		})
@@ -590,4 +609,10 @@ func (t *Table) RemovePlayer(pID PlayerID) error {
 	delete(t.players, pID)
 	p.Table = nil
 	return nil
+}
+
+func (t *Table) Sleep(dur time.Duration)  {
+	if t.Delays {
+		time.Sleep(dur)
+	}
 }

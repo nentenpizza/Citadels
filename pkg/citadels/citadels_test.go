@@ -8,7 +8,7 @@ import (
 )
 
 func TestTable(t *testing.T) {
-	table := NewTable()
+	table := NewTable(false)
 
 	onEv := func(logging bool) OnEventFunc {
 		return func(e Event, p *Player) {
@@ -19,18 +19,47 @@ func TestTable(t *testing.T) {
 			case EventTypeChooseHero:
 				data, ok := e.Data.(EventChooseHero)
 				if !ok {
-					return
+					t.Fatal("wrong event")
 				}
 				table.SelectHero(p, data.Heroes[0].Name)
 			case EventTypeNextTurn:
 				data, ok := e.Data.(EventNextTurn)
 				if !ok {
-					return
+					t.Fatal("wrong event")
 				}
 				if data.PlayerID == p.ID {
-					table.MakeAction(ActionTypeCoin, string(p.ID))
-					table.EndTurn(p.ID)
+					if len(p.AvailableQuarters) < 1 && p.Coins > 0 {
+						table.MakeAction(ActionTypeCards, string(p.ID))
+					} else {
+						table.MakeAction(ActionTypeCoin, string(p.ID))
+					}
+					if p.Coins > 0 && len(p.AvailableQuarters) > 0 {
+						table.BuildQuarter(p.AvailableQuarters[0], string(p.ID))
+						table.EndTurn(p.ID)
+					}
 				}
+			case EventTypeChooseCards:
+				data, ok := e.Data.(EventChooseCards)
+				if !ok {
+					t.Fatal("wrong event")
+				}
+				table.SelectCard(data.Cards[0].Name, string(p.ID))
+				if p.Coins > 0 && len(p.AvailableQuarters) > 0 {
+					table.BuildQuarter(p.AvailableQuarters[0], string(p.ID))
+					if logging {
+						t.Log(len(p.AvailableQuarters))
+					}
+				}
+				table.EndTurn(p.ID)
+			case EventTypeGameEnded:
+				data, ok := e.Data.(EventGameEnded)
+					if !ok {
+						t.Fatal("wrong event")
+					}
+					if p.ID == data.Winner{
+						t.Log("winner " + data.Winner, "total score ", p.TotalScore())
+					}
+				t.Log("player " + p.ID, "total score ", p.TotalScore())
 			}
 		}
 	}
@@ -61,5 +90,6 @@ func TestTable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Minute * 2)
+	<- table.End()
+	time.Sleep(time.Second)
 }
