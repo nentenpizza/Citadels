@@ -90,9 +90,16 @@ func NewTable(delay bool) *Table {
 	}
 }
 
-func (t *Table) End() <-chan struct{} {
+func (t *Table) Ended() <-chan struct{} {
 	return t.done
 }
+
+func (t *Table) close() {
+	for _, p := range t.players{
+		close(p.updates)
+	}
+}
+
 
 // Start makes the table ready to conduct rounds
 func (t *Table) Start() error {
@@ -350,6 +357,7 @@ func (t *Table) endRound(){
 		Data: EventGameEnded{Winner: winner.ID},
 	})
 
+	t.close()
 	t.done <- struct{}{}
 }
 

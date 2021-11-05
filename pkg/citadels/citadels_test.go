@@ -3,13 +3,15 @@ package citadels
 import (
 	"math/rand"
 	"strconv"
+	"sync"
 	"testing"
-	"time"
 )
 
 func TestTable(t *testing.T) {
 	table := NewTable(false)
-
+	//done := make(chan struct{})
+	wg := sync.WaitGroup{}
+	wg.Add(4)
 	onEv := func(logging bool) OnEventFunc {
 		return func(e Event, p *Player) {
 			if logging{
@@ -60,11 +62,12 @@ func TestTable(t *testing.T) {
 						t.Log("winner " + data.Winner, "total score ", p.TotalScore())
 					}
 				t.Log("player " + p.ID, "total score ", p.TotalScore())
+				wg.Done()
 			}
 		}
 	}
 
-	p1 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(true))
+	p1 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
 	p2 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
 	p3 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
 	p4 := NewPlayer(PlayerID(strconv.Itoa(rand.Intn(100000000000))), onEv(false))
@@ -90,6 +93,5 @@ func TestTable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	<- table.End()
-	time.Sleep(time.Second)
+	wg.Wait()
 }
