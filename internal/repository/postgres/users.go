@@ -10,9 +10,9 @@ func NewUsersRepository(db *DB) *UsersRepository {
 	return &UsersRepository{db: db}
 }
 
-func (u UsersRepository) Create(s string) (int64, error) {
-	const q = `insert into users (name) values ($1) returning id`
-	rows, err := u.db.Query(q)
+func (u UsersRepository) Create(name string, email string, passwordHash string) (int64, error) {
+	const q = `insert into users (name, email, password_hash) values ($1, $2, $3) returning id`
+	rows, err := u.db.Query(q, name, email, passwordHash)
 	if err != nil {
 		return 0, err
 	}

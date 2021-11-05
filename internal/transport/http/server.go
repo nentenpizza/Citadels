@@ -1,17 +1,18 @@
-package v1
+package http
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/nentenpizza/citadels/internal/repository"
+	"github.com/nentenpizza/citadels/internal/service"
+	v1 "github.com/nentenpizza/citadels/internal/transport/http/v1"
 )
 
 type Server struct {
-	Repos *repository.Repositories
+	Users service.Users
 }
 
 func (s Server) Start(addr string) error {
-	e := echo.New()
+	e := newEcho()
 
 	s.setupRoutes(e)
 
@@ -19,6 +20,12 @@ func (s Server) Start(addr string) error {
 }
 
 func (s Server) setupRoutes(e *echo.Echo) {
+	handlerV1 := v1.NewHandler(s.Users)
+
+	api := e.Group("/api")
+	apiV1 := api.Group("/v1")
+
+	apiV1.POST("/register", handlerV1.OnRegister)
 
 }
 

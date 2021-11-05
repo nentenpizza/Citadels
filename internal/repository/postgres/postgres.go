@@ -9,8 +9,8 @@ type DB struct {
 	*sqlx.DB
 }
 
-func Open(url string) (*DB, error){
-	db, err := sqlx.Open("pgx", url)
+func Open(url string) (*DB, error) {
+	db, err := sqlx.Connect("pgx", url)
 	if err != nil {
 		return nil, err
 	}

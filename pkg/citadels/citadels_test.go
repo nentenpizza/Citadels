@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestTable tests game cycle inside Table
 func TestTable(t *testing.T) {
 	table := NewTable(false)
 	//done := make(chan struct{})
@@ -14,7 +15,7 @@ func TestTable(t *testing.T) {
 	wg.Add(4)
 	onEv := func(logging bool) OnEventFunc {
 		return func(e Event, p *Player) {
-			if logging{
+			if logging {
 				t.Log(e.Type)
 			}
 			switch e.Type {
@@ -55,13 +56,13 @@ func TestTable(t *testing.T) {
 				table.EndTurn(p.ID)
 			case EventTypeGameEnded:
 				data, ok := e.Data.(EventGameEnded)
-					if !ok {
-						t.Fatal("wrong event")
-					}
-					if p.ID == data.Winner{
-						t.Log("winner " + data.Winner, "total score ", p.TotalScore())
-					}
-				t.Log("player " + p.ID, "total score ", p.TotalScore())
+				if !ok {
+					t.Fatal("wrong event")
+				}
+				if p.ID == data.Winner {
+					t.Log("winner "+data.Winner, "total score ", p.TotalScore())
+				}
+				t.Log("player "+p.ID, "total score ", p.TotalScore())
 				wg.Done()
 			}
 		}
