@@ -1,14 +1,14 @@
 package repository
 
 import (
-	"github.com/nentenpizza/citadels/internal/domain"
+	"github.com/nentenpizza/citadels/internal/models"
 	"github.com/nentenpizza/citadels/internal/repository/postgres"
 )
 
 type Users interface {
 	Create(name string, email string, password string) (int64, error)
-	ByID(int64) (domain.User, error)
-	ByName(string) (domain.User, error)
+	ByID(int64) (models.User, error)
+	ByName(string) (models.User, error)
 	ExistsByName(string) (bool, error)
 }
 

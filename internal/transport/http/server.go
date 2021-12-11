@@ -1,31 +1,30 @@
-package http
+package httpapi
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nentenpizza/citadels/internal/service"
-	v1 "github.com/nentenpizza/citadels/internal/transport/http/v1"
 )
 
-type Server struct {
-	Users service.Users
+type App struct {
+	UsersService service.Users
 }
 
-func (s Server) Start(addr string) error {
+func (a *App) Run(addr string) error {
 	e := newEcho()
 
-	s.setupRoutes(e)
+	a.setupRoutes(e)
 
 	return e.Start(addr)
 }
 
-func (s Server) setupRoutes(e *echo.Echo) {
-	handlerV1 := v1.NewHandler(s.Users)
+func (a *App) setupRoutes(e *echo.Echo) {
+	authHandler := NewAuthHandler(a.UsersService)
 
 	api := e.Group("/api")
-	apiV1 := api.Group("/v1")
+	v1 := api.Group("/v1")
 
-	apiV1.POST("/register", handlerV1.OnRegister)
+	v1.POST("/register", authHandler.OnRegister)
 
 }
 

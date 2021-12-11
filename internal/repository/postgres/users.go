@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/nentenpizza/citadels/internal/domain"
+import "github.com/nentenpizza/citadels/internal/models"
 
 type UsersRepository struct {
 	db *DB
@@ -25,12 +25,12 @@ func (u UsersRepository) Create(name string, email string, passwordHash string) 
 	return id, nil
 }
 
-func (u UsersRepository) ByID(id int64) (user domain.User, _ error) {
+func (u UsersRepository) ByID(id int64) (user models.User, _ error) {
 	const q = `select * from users where id = $1`
 	return user, u.db.Get(&user, q, id)
 }
 
-func (u UsersRepository) ByName(name string) (user domain.User, _ error) {
+func (u UsersRepository) ByName(name string) (user models.User, _ error) {
 	const q = `select * from users where name = $1`
 	return user, u.db.Get(&user, q, name)
 }

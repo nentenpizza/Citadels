@@ -8,7 +8,7 @@ import (
 
 	"github.com/nentenpizza/citadels/internal/repository"
 	"github.com/nentenpizza/citadels/internal/repository/postgres"
-	"github.com/nentenpizza/citadels/internal/transport/http"
+	httpapi "github.com/nentenpizza/citadels/internal/transport/http"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	usersService := service.Users{Repos: repos}
 
-	server := http.Server{Users: usersService}
+	server := httpapi.App{UsersService: usersService}
 
-	log.Fatal(server.Start(":8080"))
+	log.Fatal(server.Run(":8080"))
 }

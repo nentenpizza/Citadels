@@ -1,4 +1,4 @@
-package v1
+package httpapi
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"github.com/nentenpizza/citadels/internal/service"
 )
 
-func (h Handler) OnRegister(c echo.Context) error {
+func (h AuthHandler) OnRegister(c echo.Context) error {
 	var form service.UserRegisterForm
 	if err := c.Bind(&form); err != nil {
 		return err

@@ -9,9 +9,10 @@ import (
 	"time"
 )
 
-func init(){
+func init() {
 	rand.Seed(time.Now().UnixNano())
 }
+
 const (
 	// MaxPlayers is max number of players in 1 room
 	MaxPlayers = 4
@@ -67,7 +68,7 @@ type Table struct {
 	// used only in PickPhase
 	heroesToSelect []Hero
 
-	openLockedHeroes []Hero
+	openLockedHeroes   []Hero
 	closedLockedHeroes []Hero
 
 	deck []Quarter
@@ -83,10 +84,10 @@ type Table struct {
 
 func NewTable(delay bool) *Table {
 	return &Table{
-		players: make(map[PlayerID]*Player),
+		players:      make(map[PlayerID]*Player),
 		currentPhase: PreGamePhase,
-		Delays: delay,
-		done: make(chan struct{}),
+		Delays:       delay,
+		done:         make(chan struct{}),
 	}
 }
 
@@ -95,11 +96,10 @@ func (t *Table) Ended() <-chan struct{} {
 }
 
 func (t *Table) close() {
-	for _, p := range t.players{
+	for _, p := range t.players {
 		close(p.updates)
 	}
 }
-
 
 // Start makes the table ready to conduct rounds
 func (t *Table) Start() error {
@@ -116,7 +116,7 @@ func (t *Table) Start() error {
 	}
 
 	var i int = 1
-	for _, player := range t.players{
+	for _, player := range t.players {
 		player.Order = i
 		i++
 		go player.Listen()
@@ -132,20 +132,22 @@ func (t *Table) Start() error {
 	}
 
 	t.doBroadcastEvent(Event{
-		Type:  EventTypeRevealHeroSet,
-		Data:  EventHeroSet{
+		Type: EventTypeRevealHeroSet,
+		Data: EventHeroSet{
 			HeroSet: heroSets[t.heroSet],
 		},
 	})
 
-	t.Sleep(DelayAfterHeroSetReveal)
+	if t.Delays {
+		t.Sleep(DelayAfterHeroSetReveal)
+	}
 
 	t.drawCards()
 
 	t.started = true
 	t.doBroadcastEvent(Event{
-		Type:  EventTypeGameStarted,
-		Data:  EventGameStarted{
+		Type: EventTypeGameStarted,
+		Data: EventGameStarted{
 			King: t.king,
 		},
 	})
@@ -155,13 +157,13 @@ func (t *Table) Start() error {
 	return nil
 }
 
-func (t *Table) drawCards()  {
+func (t *Table) drawCards() {
 	// TODO: fill the deck normally
 	deck := make([]Quarter, 100)
 	types := []string{
 		QuarterTypeMilitary, QuarterTypeSpecial, QuarterTypeNoble, QuarterTypeSpiritual, QuarterTypeTrade,
 	}
-	for i:=0;i<100;i++{
+	for i := 0; i < 100; i++ {
 		deck[i] = Quarter{
 			Name:  strconv.Itoa(rand.Intn(10000000)),
 			Type:  types[rand.Intn(5)],
@@ -170,17 +172,17 @@ func (t *Table) drawCards()  {
 		}
 	}
 	t.deck = deck
-	for _, p := range t.players{
+	for _, p := range t.players {
 		p.AvailableQuarters = t.deck[:4]
 		t.deck = t.deck[4:]
 		p.Notify(Event{
-			Type:  EventTypeDrawCards,
-			Data:  EventCards{Cards: p.AvailableQuarters},
+			Type: EventTypeDrawCards,
+			Data: EventCards{Cards: p.AvailableQuarters},
 		})
 	}
 }
 
-func (t *Table) startPickPhase()  {
+func (t *Table) startPickPhase() {
 	t.currentPhase = PickPhase
 
 	heroSet := make([]Hero, len(heroSets[t.heroSet]))
@@ -192,7 +194,7 @@ func (t *Table) startPickPhase()  {
 	t.closedLockedHeroes = make([]Hero, 0)
 	var finalIndex int
 
-	for i, hero := range heroSet{
+	for i, hero := range heroSet {
 		t.openLockedHeroes = append(t.openLockedHeroes, hero)
 		if len(t.players) == 4 && i+1 == 3 {
 			t.closedLockedHeroes = append(t.closedLockedHeroes, heroSet[0])
@@ -203,7 +205,7 @@ func (t *Table) startPickPhase()  {
 	t.heroesToSelect = heroSet[finalIndex:]
 
 	t.doBroadcastEvent(Event{
-		Type:  EventTypePickPhaseStarted,
+		Type: EventTypePickPhaseStarted,
 		Data: EventPickPhaseStarted{
 			OpenLockedHeroes:   t.openLockedHeroes,
 			ClosedLockedHeroes: len(t.closedLockedHeroes),
@@ -212,14 +214,14 @@ func (t *Table) startPickPhase()  {
 
 	t.selecting = t.king
 	t.king.Notify(Event{
-		Type:  EventTypeChooseHero,
-		Data:  EventChooseHero{ Heroes: t.heroesToSelect },
+		Type: EventTypeChooseHero,
+		Data: EventChooseHero{Heroes: t.heroesToSelect},
 	})
 
 	t.startSelectingTimer()
 }
 
-func (t *Table) nextSelecting(){
+func (t *Table) nextSelecting() {
 	playersCount := len(t.players)
 	currentPlayerOrder := t.selecting.Order
 
@@ -228,24 +230,24 @@ func (t *Table) nextSelecting(){
 		nextPlayerOrder = 1
 	}
 
-	for _, p := range t.players{
-		if p.Order == nextPlayerOrder{
+	for _, p := range t.players {
+		if p.Order == nextPlayerOrder {
 
 			// if turn returns to the king this is means that all players at the table selected their heroes
-			if t.king.ID == p.ID{
+			if t.king.ID == p.ID {
 				t.startActionPhase()
 				return
 			}
 			t.selecting = p
 
 			p.Notify(Event{
-				Type:  EventTypeChooseHero,
-				Data:  EventChooseHero{ Heroes: t.heroesToSelect },
+				Type: EventTypeChooseHero,
+				Data: EventChooseHero{Heroes: t.heroesToSelect},
 			})
 
 			t.doBroadcastEvent(Event{
-				Type:  EventTypeNextSelecting,
-				Data:  EventPlayerID{PlayerID: p.ID},
+				Type: EventTypeNextSelecting,
+				Data: EventPlayerID{PlayerID: p.ID},
 			})
 			break
 		}
@@ -258,12 +260,11 @@ func (t *Table) startActionPhase() {
 	t.currentPhase = ActionPhase
 
 	t.doBroadcastEvent(Event{
-		Type:  EventTypeActionPhaseStarted,
+		Type: EventTypeActionPhaseStarted,
 	})
 
 	t.nextTurn()
 }
-
 
 func (t *Table) nextTurn() {
 	t.currentIndex += 1
@@ -276,8 +277,8 @@ func (t *Table) nextTurn() {
 		return
 	}
 
-	for _, p := range t.players{
-		if p.Hero.Turn == t.currentIndex{
+	for _, p := range t.players {
+		if p.Hero.Turn == t.currentIndex {
 			t.turn = p
 
 			t.turn.madeAction = false
@@ -285,8 +286,8 @@ func (t *Table) nextTurn() {
 			t.turn.BuildChancesLeft = 1
 
 			t.doBroadcastEvent(Event{
-				Type:  EventTypeNextTurn,
-				Data:  EventNextTurn{
+				Type: EventTypeNextTurn,
+				Data: EventNextTurn{
 					PlayerID: p.ID,
 					Hero:     p.Hero,
 					Turn:     p.Hero.Turn,
@@ -299,8 +300,8 @@ func (t *Table) nextTurn() {
 	}
 
 	t.doBroadcastEvent(Event{
-		Type:  EventTypeHeroIsAbsent,
-		Data:  EventHeroIsAbsent{
+		Type: EventTypeHeroIsAbsent,
+		Data: EventHeroIsAbsent{
 			Turn: t.currentIndex,
 		},
 	})
@@ -310,18 +311,18 @@ func (t *Table) nextTurn() {
 	t.nextTurn()
 }
 
-func (t *Table) EndTurn(pID PlayerID)  {
+func (t *Table) EndTurn(pID PlayerID) {
 	t.Lock()
 	defer t.Unlock()
 
-	if t.turn.ID == pID{
+	if t.turn.ID == pID {
 		t.nextTurn()
 	}
 }
 
-func (t *Table) endRound(){
-	for _, p := range t.players{
-		if len(p.CompletedQuarters) == 7 && t.currentPhase != EndGamePhase{
+func (t *Table) endRound() {
+	for _, p := range t.players {
+		if len(p.CompletedQuarters) == 7 && t.currentPhase != EndGamePhase {
 			t.currentPhase = EndGamePhase
 		}
 	}
@@ -331,14 +332,14 @@ func (t *Table) endRound(){
 	}
 	t.completedQuartersFirst.totalScore += 4
 	var winner *Player
-	for _, p := range t.players{
-		for _, quarter := range p.CompletedQuarters{
+	for _, p := range t.players {
+		for _, quarter := range p.CompletedQuarters {
 			p.totalScore += quarter.Price
 		}
-		if len(p.CompletedQuarters) == 7 && p.ID != t.completedQuartersFirst.ID{
+		if len(p.CompletedQuarters) == 7 && p.ID != t.completedQuartersFirst.ID {
 			p.totalScore += 2
 		}
-		if winner == nil{
+		if winner == nil {
 			winner = p
 		}
 		if p.totalScore > winner.totalScore {
@@ -346,12 +347,9 @@ func (t *Table) endRound(){
 		}
 	}
 
-
-
-	if winner == nil{
+	if winner == nil {
 		return
 	}
-
 
 	t.doBroadcastEvent(Event{Type: EventTypeGameEnded,
 		Data: EventGameEnded{Winner: winner.ID},
@@ -397,14 +395,14 @@ func (t *Table) Started() bool {
 }
 
 // King returns player which starts PickPhase this round
-func (t *Table) King() *Player  {
+func (t *Table) King() *Player {
 	t.Lock()
 	defer t.Unlock()
 	return t.king
 }
 
 // Turn returns player which is currently taking a turn
-func (t *Table) Turn() *Player  {
+func (t *Table) Turn() *Player {
 	t.Lock()
 	defer t.Unlock()
 	return t.turn
@@ -412,26 +410,26 @@ func (t *Table) Turn() *Player  {
 
 // SelectHero sets Player.Hero to Hero with given heroName if
 // Player is currently selecting and Hero with heroName is present in heroesToSelect
-func (t *Table) SelectHero(p *Player, heroName string){
+func (t *Table) SelectHero(p *Player, heroName string) {
 	t.Lock()
 	defer t.Unlock()
 
-	if t.currentPhase != PickPhase{
+	if t.currentPhase != PickPhase {
 		return
 	}
 
-	if t.selecting.ID != p.ID{
+	if t.selecting.ID != p.ID {
 		p.Notify(Event{Error: ErrorTypeAnotherPlayerSelecting})
 		return
 	}
 
-	for i, hero := range t.heroesToSelect{
-		if hero.Name == heroName{
+	for i, hero := range t.heroesToSelect {
+		if hero.Name == heroName {
 			t.selecting.Hero = t.heroesToSelect[i]
 			t.heroesToSelect = removeHero(t.heroesToSelect, i)
 			p.Notify(Event{
-				Type:  EventTypeHeroSelected,
-				Data:  EventHeroSelected{Hero: hero},
+				Type: EventTypeHeroSelected,
+				Data: EventHeroSelected{Hero: hero},
 			})
 			t.nextSelecting()
 			return
@@ -443,7 +441,7 @@ func (t *Table) SelectHero(p *Player, heroName string){
 	})
 }
 
-func (t *Table) CastSkill(casterID string, ev Event) error{
+func (t *Table) CastSkill(casterID string, ev Event) error {
 	t.Lock()
 	defer t.Unlock()
 
@@ -462,7 +460,7 @@ func (t *Table) CastSkill(casterID string, ev Event) error{
 }
 
 const (
-	ActionTypeCoin = "coins"
+	ActionTypeCoin  = "coins"
 	ActionTypeCards = "cards"
 )
 
@@ -470,7 +468,7 @@ const (
 func (t *Table) MakeAction(actionType string, pID string) {
 	t.Lock()
 	defer t.Unlock()
-	
+
 	target, ok := t.playerByID(pID)
 	if !ok {
 		return
@@ -514,7 +512,7 @@ func (t *Table) MakeAction(actionType string, pID string) {
 }
 
 // SelectCard adds card to Player.AvailableQuarters
-func (t *Table) SelectCard(cardName string, pID string){
+func (t *Table) SelectCard(cardName string, pID string) {
 	t.Lock()
 	defer t.Unlock()
 	target, ok := t.playerByID(pID)
@@ -522,7 +520,7 @@ func (t *Table) SelectCard(cardName string, pID string){
 		return
 	}
 
-	if target.currentCardsChoice == nil || len(target.currentCardsChoice) < 2{
+	if target.currentCardsChoice == nil || len(target.currentCardsChoice) < 2 {
 		return
 	}
 
@@ -541,7 +539,7 @@ func (t *Table) SelectCard(cardName string, pID string){
 
 }
 
-func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
+func (t *Table) BuildQuarter(quarter Quarter, pID string) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -558,18 +556,18 @@ func (t *Table) BuildQuarter(quarter Quarter, pID string)  {
 		return
 	}
 
-	if t.turn.ID != target.ID{
+	if t.turn.ID != target.ID {
 		return
 	}
 
-	if quarter.Price > target.Coins{
+	if quarter.Price > target.Coins {
 		target.Notify(Event{
 			Error: ErrorTypeNotEnoughCoins,
 		})
 		return
 	}
 
-	if !target.hasQuarter(quarter.Name){
+	if !target.hasQuarter(quarter.Name) {
 		return
 	}
 
@@ -619,7 +617,7 @@ func (t *Table) RemovePlayer(pID PlayerID) error {
 	return nil
 }
 
-func (t *Table) Sleep(dur time.Duration)  {
+func (t *Table) Sleep(dur time.Duration) {
 	if t.Delays {
 		time.Sleep(dur)
 	}
